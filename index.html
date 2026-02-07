@@ -1,0 +1,220 @@
+<script>
+const audio = document.getElementById('bg-music');
+
+const LYRIC_OFFSET = 9.8;
+
+// Build lyric timeline
+const lyricsData = [
+    { time: 0, text: "🎶 (feel the moment) 🎶" },
+    ...rawLyrics.map(l => ({ time: l.t + LYRIC_OFFSET, text: l.txt }))
+];
+
+let lyricIndex = 0;
+
+
+/* ================================
+        UNLOCK EXPERIENCE
+================================ */
+
+function handleUnlock() {
+    document.getElementById('tap-text').style.display = 'none';
+    document.getElementById('loading-text').style.display = 'block';
+
+    audio.load();
+
+    setTimeout(() => {
+
+        document.getElementById('envelope-overlay').style.display = 'none';
+        document.getElementById('main-container').style.display = 'block';
+        document.getElementById('spotify-lyrics').style.display = 'block';
+
+        startTimer();
+        initObserver();
+
+        audio.play().then(() => {
+
+            lyricIndex = 0;
+            updateLyrics();
+
+            requestAnimationFrame(syncLyrics);
+            pulseBackground();
+
+        }).catch(e => console.log(e));
+
+    }, 4000);
+}
+
+
+/* ================================
+        SPOTIFY LEVEL SYNC
+================================ */
+
+function syncLyrics() {
+
+    const time = audio.currentTime;
+
+    if (
+        lyricIndex < lyricsData.length - 1 &&
+        time >= lyricsData[lyricIndex + 1].time
+    ) {
+        lyricIndex++;
+        animateLyricChange();
+        updateLyrics();
+
+        // Final romantic moment ❤️
+        if (lyricIndex === lyricsData.length - 1) {
+            launchHearts();
+        }
+    }
+
+    requestAnimationFrame(syncLyrics);
+}
+
+function updateLyrics() {
+
+    const prev = document.getElementById('ly-prev');
+    const curr = document.getElementById('ly-curr');
+    const next = document.getElementById('ly-next');
+
+    prev.innerText = lyricIndex > 0 ? lyricsData[lyricIndex - 1].text : "";
+    curr.innerText = lyricsData[lyricIndex].text;
+    next.innerText = lyricIndex < lyricsData.length - 1
+        ? lyricsData[lyricIndex + 1].text
+        : "";
+}
+
+
+/* ================================
+        SMOOTH FADE ANIMATION
+================================ */
+
+function animateLyricChange() {
+
+    const curr = document.getElementById('ly-curr');
+
+    curr.style.opacity = 0;
+    curr.style.transform = "translateY(10px) scale(0.98)";
+
+    setTimeout(() => {
+        curr.style.opacity = 1;
+        curr.style.transform = "translateY(0px) scale(1)";
+    }, 120);
+}
+
+
+/* ================================
+        MUSIC REACTIVE GLOW
+================================ */
+
+function pulseBackground() {
+
+    const moon = document.querySelector('.indie-moon');
+
+    // Fake beat detection using volume energy
+    const ctx = new AudioContext();
+    const src = ctx.createMediaElementSource(audio);
+    const analyser = ctx.createAnalyser();
+
+    src.connect(analyser);
+    analyser.connect(ctx.destination);
+
+    analyser.fftSize = 256;
+
+    const data = new Uint8Array(analyser.frequencyBinCount);
+
+    function animate() {
+
+        analyser.getByteFrequencyData(data);
+
+        let avg = data.reduce((a,b)=>a+b,0)/data.length;
+
+        let scale = 1 + (avg / 600);
+
+        moon.style.transform =
+            `translate(-50%, -50%) scale(${scale})`;
+
+        requestAnimationFrame(animate);
+    }
+
+    animate();
+}
+
+
+/* ================================
+        FLOATING HEARTS
+================================ */
+
+function launchHearts() {
+
+    for (let i = 0; i < 18; i++) {
+
+        const heart = document.createElement("div");
+
+        heart.innerHTML = "❤️";
+
+        heart.style.position = "fixed";
+        heart.style.left = Math.random() * 100 + "vw";
+        heart.style.bottom = "-20px";
+        heart.style.fontSize = (18 + Math.random()*22) + "px";
+        heart.style.opacity = Math.random();
+        heart.style.zIndex = 9999;
+        heart.style.pointerEvents = "none";
+        heart.style.transition = "transform 6s linear, opacity 6s";
+
+        document.body.appendChild(heart);
+
+        setTimeout(() => {
+
+            heart.style.transform =
+                `translateY(-110vh) translateX(${Math.random()*80-40}px)`;
+
+            heart.style.opacity = 0;
+
+        }, 50);
+
+        setTimeout(()=>heart.remove(),6000);
+    }
+}
+
+
+/* ================================
+        SCROLL ANIMATIONS
+================================ */
+
+function initObserver() {
+
+    const obs = new IntersectionObserver((es) => {
+        es.forEach(e => {
+            if(e.isIntersecting) {
+                e.target.classList.add('visible');
+            }
+        });
+    }, { threshold: 0.15 });
+
+    document.querySelectorAll('.section').forEach(s => obs.observe(s));
+}
+
+
+/* ================================
+        LOVE TIMER
+================================ */
+
+function startTimer() {
+
+    const start = new Date("November 3, 2024 00:00:00").getTime();
+
+    setInterval(() => {
+
+        const diff = new Date().getTime() - start;
+
+        const d = Math.floor(diff / 86400000);
+        const h = Math.floor((diff % 86400000) / 3600000);
+        const min = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+
+        document.getElementById('timer').innerHTML =
+            d + "d : " + h + "h : " + min + "m : " + s + "s";
+
+    }, 1000);
+}
+</script>
